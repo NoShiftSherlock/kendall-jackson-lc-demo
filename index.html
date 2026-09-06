@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kendall-Jackson — Order Direct</title>
+<meta name="description" content="Sales demo: kendall-jackson.com with LiquidCommerce Elements commerce embedded.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Roboto+Condensed:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="announce">Complimentary shipping on 6 bottles or more · Same-day delivery in Los Angeles</div>
+
+<header>
+  <div class="hdr">
+    <a href="index.html"><img class="logo" src="assets/logo.png" alt="Kendall-Jackson"></a>
+    <button class="burger" id="burger" aria-label="Menu">☰</button>
+    <nav class="main">
+      <a href="index.html" aria-current="page">Wines</a>
+      <a href="product.html">Vintner's Reserve</a>
+      <a href="#story">Our Story</a>
+      <a href="#visit">Visit</a>
+    </nav>
+    <div class="hdr-actions">
+      <button class="cart-pill" data-lce-cart-toggle-button>
+        <span class="lbl">Cart</span>
+        <span class="count" data-lce-cart-items-count hidden>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Est. 1982 · Sonoma County</div>
+      <h1>America's favourite Chardonnay, delivered.</h1>
+      <p>Order the Vintner's Reserve collection direct from the winery, or have it
+         brought from a store near you in about an hour.</p>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <a class="btn" href="product.html">Shop Vintner's Reserve</a>
+        <a class="btn ghost" href="#collection">See the collection</a>
+      </div>
+    </div>
+    <div><img src="assets/hero-lineup.png" alt="Kendall-Jackson Vintner's Reserve lineup"></div>
+  </div>
+</section>
+
+<section class="band" id="collection">
+  <div class="section-head">
+    <h2>The Vintner's Reserve Collection</h2>
+    <p>Six wines, one philosophy: grapes from cool coastal ridges, picked by hand.</p>
+  </div>
+  <div class="grid" id="collection-grid"></div>
+</section>
+
+<section class="band" style="padding-top:0">
+  <div class="lce-host">
+    <div id="lce-product" data-upc="00081584013105"></div>
+  </div>
+</section>
+
+<section class="band" id="story" style="background:var(--offwhite);max-width:none">
+  <div style="max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center">
+    <img src="assets/lifestyle-picnic.jpg" alt="Kendall-Jackson estate" style="border-radius:var(--radius)">
+    <div>
+      <div class="eyebrow">Our Story</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:clamp(1.9rem,4vw,2.6rem);margin:0 0 1rem">
+        Four decades of coastal fruit</h2>
+      <p style="color:var(--gray)">Jess Jackson bottled his first Vintner's Reserve Chardonnay in 1982.
+        Forty years on it is still made the same way: grapes from cool coastal vineyards,
+        picked by hand, fermented in small lots, aged in French oak.</p>
+      <p style="color:var(--gray)">Today the family farms across Sonoma, Monterey, Santa Barbara
+        and Mendocino, all certified sustainable.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="visit">
+  <div class="section-head">
+    <h2>Visit the winery</h2>
+    <p>5007 Fulton Road, Fulton, California · Open daily 10am–5pm</p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="ft">
+    <div>
+      <img src="assets/logo-large.png" alt="Kendall-Jackson" style="height:52px;width:auto;filter:invert(1) brightness(2)">
+      <p style="font-size:.86rem;margin-top:1rem;max-width:22rem">
+        Family owned since 1982. Certified sustainable across every estate vineyard.</p>
+    </div>
+    <div><h4>Shop</h4><ul>
+      <li><a href="product.html">Vintner's Reserve</a></li>
+      <li><a href="#collection">Grand Reserve</a></li>
+      <li><a href="#collection">Jackson Estate</a></li>
+      <li><a href="#collection">Gift sets</a></li></ul></div>
+    <div><h4>Visit</h4><ul>
+      <li><a href="#visit">Wine Center</a></li>
+      <li><a href="#visit">Tastings</a></li>
+      <li><a href="#visit">Culinary garden</a></li></ul></div>
+    <div><h4>Support</h4><ul>
+      <li><a href="#">Shipping</a></li>
+      <li><a href="#">Returns</a></li>
+      <li><a href="#">Contact</a></li></ul></div>
+  </div>
+  <div class="legal-row">
+    Private sales demo. Not affiliated with Kendall-Jackson or Jackson Family Wines.
+    Trademarks belong to their owners. Please enjoy responsibly.
+  </div>
+</footer>
+
+<!-- cart drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Shopping cart">
+  <header>
+    <h2>Your Cart</h2>
+    <button class="x" id="drawer-close" aria-label="Close cart">×</button>
+  </header>
+  <div class="items" id="drawer-items"></div>
+  <div class="foot" id="drawer-foot"></div>
+</aside>
+
+<div class="ribbon">Demo · Vesper Commerce</div>
+
+<script src="elements-config.js"></script>
+<script src="app.js"></script>
+<script>
+// Build the collection grid from the same catalog the product element uses.
+(function () {
+  var grid = document.getElementById('collection-grid');
+  if (!grid || !window.KJDemo) return;
+  var c = window.KJDemo.catalog;
+  grid.innerHTML = Object.keys(c).map(function (upc) {
+    var p = c[upc];
+    return '<a class="card" href="product.html?upc=' + upc + '">' +
+      '<div class="shot"><img src="' + p.image + '" alt="' + p.name + '"></div>' +
+      '<span class="varietal">' + p.varietal + '</span>' +
+      '<h3>' + p.name + '</h3>' +
+      '<span class="price">$' + (p.price / 100).toFixed(2) + '</span>' +
+      '<span class="btn ghost" style="margin-top:.5rem" data-add-upc="' + upc + '">Add to cart</span>' +
+      '</a>';
+  }).join('');
+  // rewire the add buttons that were just injected
+  Array.prototype.forEach.call(grid.querySelectorAll('[data-add-upc]'), function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      window.KJDemo.actions.cart.addProduct({
+        upc: b.getAttribute('data-add-upc'), fulfillmentType: 'onDemand',
+        retailerId: 'r-totalw', quantity: 1, engravingLines: []
+      }, true);
+    });
+  });
+})();
+</script>
+</body>
+</html>

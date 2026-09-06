@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checkout — Kendall-Jackson</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Roboto+Condensed:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <a href="index.html"><img class="logo" src="assets/logo.png" alt="Kendall-Jackson"></a>
+    <div class="hdr-actions" style="margin-left:auto">
+      <a class="btn ghost" href="index.html" style="padding:.5rem 1.1rem" data-lce-exit-checkout>Exit checkout</a>
+    </div>
+  </div>
+</header>
+
+<!-- Confirmation view, shown after submit -->
+<div id="confirmed" hidden>
+  <div class="thanks">
+    <h1>Thank you</h1>
+    <p style="color:var(--gray)">Your order is confirmed and on its way.</p>
+    <p class="num" id="order-num"></p>
+    <p style="color:var(--gray);font-size:.9rem" id="order-total"></p>
+    <a class="btn" href="index.html" style="margin-top:1.5rem">Continue shopping</a>
+  </div>
+</div>
+
+<!-- Checkout view -->
+<div id="checkout-view">
+  <div class="co-wrap">
+    <form class="co-main" id="co-form">
+
+      <div class="co-step" data-form="customer">
+        <h3><span class="n">1</span> Contact</h3>
+        <div class="frm">
+          <label>First name <input name="firstName" required></label>
+          <label>Last name <input name="lastName" required></label>
+          <label class="full">Email <input type="email" name="email" required></label>
+          <label>Phone <input type="tel" name="phone"></label>
+          <label>Date of birth <input type="date" name="birthDate" required></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="opt-email" checked>
+          <span>Email me about new releases and offers from Kendall-Jackson.</span></label>
+        <label class="chk"><input type="checkbox" id="opt-sms">
+          <span>Text me order updates and exclusive offers.</span></label>
+      </div>
+
+      <div class="co-step">
+        <h3><span class="n">2</span> Delivery</h3>
+        <div class="frm">
+          <label class="full">Address <input name="addressOne" id="ship-addr" required></label>
+          <label>Apt / Suite <input name="addressTwo"></label>
+          <label>City <input name="city" value="Los Angeles" required></label>
+          <label>State <input name="state" value="CA" required></label>
+          <label>ZIP <input name="zipCode" value="90028" required></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="is-gift">
+          <span>This is a gift</span></label>
+        <div id="gift-fields" hidden data-form="gift" style="margin-top:.75rem">
+          <div class="frm">
+            <label>Recipient first name <input name="giftFirstName"></label>
+            <label>Recipient last name <input name="giftLastName"></label>
+            <label class="full">Gift message <input name="message" maxlength="140"></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="co-step" data-form="billing">
+        <h3><span class="n">3</span> Payment</h3>
+        <div class="card-mock">
+          <span>&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4242</span>
+          <span>12 / 30</span>
+        </div>
+        <div class="stripe-note">
+          Card entry is a placeholder in this demo. The live build renders Stripe's
+          Payment Element here, injected by the Elements SDK.
+        </div>
+        <label class="chk"><input type="checkbox" id="bill-same" checked>
+          <span>Billing address same as delivery</span></label>
+        <div id="billing-fields" hidden style="margin-top:.75rem">
+          <div class="frm">
+            <label class="full">Billing address <input name="billAddressOne"></label>
+            <label>City <input name="billCity"></label>
+            <label>State <input name="billState"></label>
+            <label>ZIP <input name="billZip"></label>
+          </div>
+        </div>
+        <button class="btn block gold" id="place-order" type="submit" style="margin-top:1.25rem">Place order</button>
+        <p class="legal">By placing your order you confirm you are 21 or older and agree to the
+          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          An adult signature is required on delivery.</p>
+      </div>
+    </form>
+
+    <aside class="co-side" id="co-summary"></aside>
+  </div>
+</div>
+
+<div class="ribbon">Demo &middot; Vesper Commerce</div>
+
+<script src="elements-config.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var confirmed = new URLSearchParams(location.search).get('confirmed');
+  if (!confirmed) return;
+  var raw = null;
+  try { raw = JSON.parse(sessionStorage.getItem('kj-order')); } catch (e) {}
+  document.getElementById('checkout-view').hidden = true;
+  document.getElementById('confirmed').hidden = false;
+  if (raw) {
+    document.getElementById('order-num').textContent = 'Order ' + raw.orderNumber;
+    document.getElementById('order-total').textContent = 'Total $' + (raw.total / 100).toFixed(2);
+  }
+})();
+</script>
+</body>
+</html>
