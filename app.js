@@ -17,70 +17,119 @@
   'use strict';
 
   // ---------------------------------------------------------------- catalog
-  // UPCs are real, pulled from the LiquidCommerce catalog API for brand
-  // "Kendall Jackson" / "Kendall-jackson". Prices are representative shelf prices.
+  // REAL DATA. Pulled from GET /catalog/availability on 2026-09-11 against
+  // 6801 Hollywood Blvd, Los Angeles CA 90028. Retailers, prices, stock, fees,
+  // minimums and hours below are exactly what the LiquidCommerce network
+  // returned. Re-pull with scripts/refresh-availability.sh, do not hand-edit.
+  //
+  // Only the Chardonnay has retailer variants attached today. The other four
+  // SKUs are in the master catalog but return no availability, so they render
+  // the real "not available at this address" state rather than a fake one.
+
+  const RETAILERS = {
+    'r-corkrun':    { id:'r-corkrun',    name:'Cork Runner Wine and Spirits', street:'',  city:'Los Angeles, CA',   type:'onDemand',
+                   fee:299,  min:2500, freeOver:null, platformFee:599, expectation:'Delivered in about 60 mins', short:'60 mins',
+                   opensAt:'10:30', closesAt:'21:45' },
+    'r-robertb':   { id:'r-robertb',   name:'Robert Burns Wines', street:'157 N Robertson Blvd', city:'Beverly Hills, CA', type:'onDemand',
+                   fee:499,  min:2500, freeOver:2500, platformFee:599, expectation:'Delivered in about 60 mins', short:'60 mins',
+                   opensAt:'10:30', closesAt:'21:45' },
+    'r-mission': { id:'r-mission', name:'Mission Wine & Spirits', street:'', city:'Pasadena, CA',    type:'shipping',
+                   fee:0, min:0, freeOver:null, platformFee:599, expectation:'Arrives in 2–3 business days', short:'2–3 days' },
+    'r-liquorb':    { id:'r-liquorb',    name:'Liquor Barn',        street:'', city:'Wheeling, IL',      type:'shipping',
+                   fee:0, min:0, freeOver:null, platformFee:599, expectation:'Arrives in 2–3 business days', short:'2–3 days' },
+    'r-bottles': { id:'r-bottles', name:'Bottles & Cases',    street:'', city:'Huntington, NY',    type:'shipping',
+                   fee:0, min:0, freeOver:null, platformFee:599, expectation:'Arrives in 2–3 business days', short:'2–3 days' },
+    'r-wjliquo':      { id:'r-wjliquo',      name:'W & J Liquor',       street:'', city:'Brooklyn, NY',      type:'shipping',
+                   fee:0, min:0, freeOver:null, platformFee:599, expectation:'Arrives in 2–3 business days', short:'2–3 days' },
+    'r-primewi':   { id:'r-primewi',   name:'Prime Wine & Liquor', street:'', city:'Kings Park, NY',   type:'shipping',
+                   fee:0, min:0, freeOver:null, platformFee:599, expectation:'Arrives in 2–3 business days', short:'2–3 days' }
+  };
+
+  // Per-retailer price and stock. This is why the demo is worth showing: the
+  // same bottle is $13.99 shipped from Wheeling and $17.99 in an hour from
+  // Beverly Hills, and the shopper picks.
+  const VARIANTS = {
+    '00081584013105': [
+      { retailerId:'r-corkrun',    price:1699, stock:9   },
+      { retailerId:'r-robertb',   price:1799, stock:2   },
+      { retailerId:'r-liquorb',    price:1399, stock:159 },
+      { retailerId:'r-mission', price:1499, stock:250 },
+      { retailerId:'r-bottles', price:1599, stock:350 },
+      { retailerId:'r-wjliquo',      price:1795, stock:198 },
+      { retailerId:'r-primewi',   price:2759, stock:135 }
+    ]
+    // Sauvignon Blanc, Pinot Noir, Cabernet and Merlot: no variants returned.
+  };
+
+  const MAX_QTY = 12;   // size.attributes.maxQuantityPerOrder
+
+  // size.attributes.engraving came back status:false for this SKU, so engraving
+  // is off. Kept wired rather than ripped out: if KJ enables it on a SKU later,
+  // set enabled:true and the existing code paths light up.
+  const ENGRAVING = { enabled: false, maxLines: 0, maxCharsPerLine: 0, fee: 0 };
+
+  const PROMOS = { HARVEST20: { pct: 20, label: '20% off' }, KJFRIEND: { pct: 10, label: '10% off' } };
+
   const CATALOG = {
     '00081584013105': {
       upc: '00081584013105', name: "Vintner's Reserve Chardonnay",
       varietal: 'Chardonnay', appellation: 'California', vintage: '2023',
-      price: 1699, image: 'assets/bottle-chardonnay.png', engravable: true,
-      desc: 'The most popular Chardonnay in America. Tropical fruit, citrus and a touch of vanilla from barrel ageing, with a long, bright finish.',
-      notes: ['Pineapple', 'Mango', 'Vanilla', 'Toasted oak']
+      price: 1399, image: 'assets/bottle-chardonnay.png', engravable: false,
+      desc: 'The most popular Chardonnay in America. Tropical fruit, citrus and a touch of vanilla from barrel ageing, with a long, bright finish.'
     },
     '00081584130406': {
       upc: '00081584130406', name: "Vintner's Reserve Sauvignon Blanc",
       varietal: 'Sauvignon Blanc', appellation: 'California', vintage: '2024',
-      price: 1499, image: 'assets/bottle-sauvblanc.png', engravable: true,
-      desc: 'Crisp and aromatic, with grapefruit, lemongrass and a clean mineral finish. Cool-fermented in stainless steel to keep the fruit bright.',
-      notes: ['Grapefruit', 'Lemongrass', 'Green apple']
+      price: 1499, image: 'assets/bottle-sauvblanc.png', engravable: false,
+      desc: 'Crisp and aromatic, with grapefruit, lemongrass and a clean mineral finish. Cool-fermented in stainless steel to keep the fruit bright.'
     },
     '00081584131519': {
       upc: '00081584131519', name: "Vintner's Reserve Pinot Noir",
       varietal: 'Pinot Noir', appellation: 'California', vintage: '2022',
-      price: 1999, image: 'assets/bottle-pinotnoir.png', engravable: true,
-      desc: 'Silky and layered. Black cherry and raspberry over soft tannins, with a hint of cola and baking spice from French oak.',
-      notes: ['Black cherry', 'Raspberry', 'Cola', 'Clove']
+      price: 1999, image: 'assets/bottle-pinotnoir.png', engravable: false,
+      desc: 'Silky and layered. Black cherry and raspberry over soft tannins, with a hint of cola and baking spice from French oak.'
     },
     '00081584013174': {
       upc: '00081584013174', name: "Vintner's Reserve Cabernet Sauvignon",
       varietal: 'Cabernet Sauvignon', appellation: 'Sonoma County', vintage: '2021',
-      price: 2499, image: 'assets/bottle-cabernet.png', engravable: true,
-      desc: 'Structured Sonoma Cabernet. Blackcurrant and cedar, firm but rounded tannins, and a finish that holds.',
-      notes: ['Blackcurrant', 'Cedar', 'Dark chocolate']
+      price: 2499, image: 'assets/bottle-cabernet.png', engravable: false,
+      desc: 'Structured Sonoma Cabernet. Blackcurrant and cedar, firm but rounded tannins, and a finish that holds.'
     },
     '00081584013204': {
       upc: '00081584013204', name: "Vintner's Reserve Merlot",
       varietal: 'Merlot', appellation: 'California', vintage: '2022',
       price: 1799, image: 'assets/bottle-merlot.png', engravable: false,
-      desc: 'Plush and approachable, with plum, blackberry and a soft mocha finish.',
-      notes: ['Plum', 'Blackberry', 'Mocha']
-    },
-    '00081584013303': {
-      upc: '00081584013303', name: "Vintner's Reserve Rosé",
-      varietal: 'Rosé', appellation: 'California', vintage: '2024',
-      price: 1599, image: 'assets/bottle-rose.png', engravable: false,
-      desc: 'Pale, dry and refreshing. Strawberry and white peach with a crisp, clean finish.',
-      notes: ['Strawberry', 'White peach', 'Citrus zest']
+      desc: 'Plush and approachable, with plum, blackberry and a soft mocha finish.'
     }
   };
 
-  // Retailers mirror the shapes the Elements mock UPCs exercise: open with a free
-  // delivery fee, open with a paid fee, closing soon, and closed.
-  const RETAILERS = {
-    shipping: [
-      { id: 'r-kj-dtc',  name: 'Kendall-Jackson Winery',  meta: 'Ships from Santa Rosa, CA', expectation: 'Arrives in 3–5 business days', fee: 0,    status: 'open', min: 0 },
-      { id: 'r-vinoshp', name: 'Vino Shipping Partner',   meta: 'Ships from Napa, CA',       expectation: 'Arrives in 2–4 business days', fee: 995,  status: 'open', min: 3000 }
-    ],
-    onDemand: [
-      { id: 'r-totalw',  name: 'Total Wine & More',       meta: 'Culver City · 2.1 mi',   expectation: 'Delivered in about 1 hour', fee: 0,    status: 'open',   min: 2500 },
-      { id: 'r-bevmo',   name: 'BevMo!',                  meta: 'West Hollywood · 3.4 mi', expectation: 'Delivered in about 1 hour', fee: 599,  status: 'open',   min: 2000 },
-      { id: 'r-vendome', name: 'Vendome Wine & Spirits',  meta: 'Los Feliz · 5.0 mi',      expectation: 'Closes at 9:00 PM',         fee: 499,  status: 'soon',   min: 0 },
-      { id: 'r-gelsons', name: "Gelson's Market",         meta: 'Silver Lake · 4.2 mi',    expectation: 'Opens at 8:00 AM',          fee: 499,  status: 'closed', min: 0 }
-    ]
-  };
+  // Real hours drive a real status. 10:30–21:45 local, same as the API returned.
+  function retailerStatus(r) {
+    if (r.type !== 'onDemand') return 'open';
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const parse = t => parseInt(t.split(':')[0], 10) * 60 + parseInt(t.split(':')[1], 10);
+    const o = parse(r.opensAt), c = parse(r.closesAt);
+    if (mins < o || mins >= c) return 'closed';
+    if (c - mins <= 60) return 'soon';
+    return 'open';
+  }
 
-  const ENGRAVING = { maxLines: 2, maxCharsPerLine: 20, fee: 1500 };
-  const PROMOS = { HARVEST20: { pct: 20, label: '20% off' }, KJFRIEND: { pct: 10, label: '10% off' } };
+  function variantsFor(upc, type) {
+    return (VARIANTS[upc] || [])
+      .filter(v => RETAILERS[v.retailerId] && RETAILERS[v.retailerId].type === type)
+      .map(v => Object.assign({}, RETAILERS[v.retailerId], v, { status: retailerStatus(RETAILERS[v.retailerId]) }))
+      .sort((a, b) => a.price - b.price);
+  }
+  function hasAvailability(upc) { return (VARIANTS[upc] || []).length > 0; }
+  function variantOf(upc, retailerId) {
+    return (VARIANTS[upc] || []).filter(v => v.retailerId === retailerId)[0] || null;
+  }
+  function priceFor(upc, retailerId) {
+    const v = variantOf(upc, retailerId);
+    return v ? v.price : (CATALOG[upc] ? CATALOG[upc].price : 0);
+  }
+
 
   // ---------------------------------------------------------------- state
   const LS = 'kj-lc-demo-v1';
@@ -114,24 +163,29 @@
   const money = c => '$' + (c / 100).toFixed(2);
   const $  = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
-  const retailerById = id =>
-    RETAILERS.shipping.concat(RETAILERS.onDemand).filter(r => r.id === id)[0];
+  const retailerById = id => RETAILERS[id];
 
   function cartTotals() {
     let subtotal = 0, itemCount = 0;
     state.items.forEach(function (i) {
       const p = CATALOG[i.upc]; if (!p) return;
-      subtotal += p.price * i.qty;
+      subtotal += priceFor(i.upc, i.retailerId) * i.qty;
       if (i.engravingLines && i.engravingLines.length) subtotal += ENGRAVING.fee * i.qty;
       itemCount += i.qty;
     });
     const promo = state.promo && PROMOS[state.promo] ? PROMOS[state.promo] : null;
     const discount = promo ? Math.round(subtotal * promo.pct / 100) : 0;
     // delivery fee once per distinct retailer in the cart
-    let delivery = 0;
-    groupByRetailer().forEach(function (g) { delivery += g.retailer.fee; });
+    let delivery = 0, platform = 0;
+    groupByRetailer().forEach(function (g) {
+      // free-delivery threshold is real: Robert Burns waives the fee over $25
+      const waived = g.retailer.freeOver && g.subtotal >= g.retailer.freeOver;
+      delivery += waived ? 0 : g.retailer.fee;
+      platform += g.retailer.platformFee || 0;
+    });
     const tax = Math.round((subtotal - discount) * 0.0975);
-    return { subtotal, discount, delivery, tax, total: subtotal - discount + delivery + tax, itemCount };
+    return { subtotal, discount, delivery, platform, tax,
+             total: subtotal - discount + delivery + platform + tax, itemCount };
   }
 
   function groupByRetailer() {
@@ -140,7 +194,7 @@
       if (!map[i.retailerId]) map[i.retailerId] = { retailer: retailerById(i.retailerId), items: [], subtotal: 0 };
       const p = CATALOG[i.upc]; if (!p) return;
       map[i.retailerId].items.push(i);
-      map[i.retailerId].subtotal += p.price * i.qty +
+      map[i.retailerId].subtotal += priceFor(i.upc, i.retailerId) * i.qty +
         ((i.engravingLines && i.engravingLines.length) ? ENGRAVING.fee * i.qty : 0);
     });
     return Object.keys(map).map(k => map[k]).filter(g => g.retailer);
@@ -190,8 +244,10 @@
     const p = CATALOG[params.upc]; if (!p) return false;
     let lines = params.engravingLines || [];
     // Same degradation rules the SDK documents: strip blanks, clamp, drop if unsupported.
-    lines = lines.filter(l => l && l.trim()).slice(0, ENGRAVING.maxLines)
-                 .map(l => l.trim().slice(0, ENGRAVING.maxCharsPerLine));
+    lines = ENGRAVING.enabled
+      ? lines.filter(l => l && l.trim()).slice(0, ENGRAVING.maxLines)
+             .map(l => l.trim().slice(0, ENGRAVING.maxCharsPerLine))
+      : [];
     if (!p.engravable) lines = [];
 
     const key = [params.upc, params.fulfillmentType, params.retailerId, lines.join('|')].join('::');
@@ -288,17 +344,25 @@
   function renderProduct() {
     const host = $('#lce-product'); if (!host) return;
     const upc = host.getAttribute('data-upc');
-    if (pstate.upc !== upc) {
-      pstate.upc = upc; pstate.qty = 1; pstate.engraving = [];
-      pstate.retailerId = RETAILERS[pstate.fulfillmentType].filter(r => r.status !== 'closed')[0].id;
-    }
     const p = CATALOG[upc]; if (!p) { host.innerHTML = '<div class="lce-body">Product not found.</div>'; return; }
-    const rs = RETAILERS[pstate.fulfillmentType];
-    if (!rs.filter(r => r.id === pstate.retailerId)[0]) {
-      pstate.retailerId = rs.filter(r => r.status !== 'closed')[0].id;
+    if (pstate.upc !== upc) { pstate.upc = upc; pstate.qty = 1; pstate.engraving = []; pstate.retailerId = null; }
+
+    const available = hasAvailability(upc);
+    // If the chosen fulfillment type has no retailers, fall back to the other one.
+    let rs = variantsFor(upc, pstate.fulfillmentType);
+    if (available && !rs.length) {
+      pstate.fulfillmentType = pstate.fulfillmentType === 'onDemand' ? 'shipping' : 'onDemand';
+      rs = variantsFor(upc, pstate.fulfillmentType);
     }
-    const r = retailerById(pstate.retailerId);
+    const openRs = rs.filter(x => x.status !== 'closed');
+    if (!rs.filter(x => x.retailerId === pstate.retailerId)[0]) {
+      pstate.retailerId = (openRs[0] || rs[0] || {}).retailerId || null;
+    }
+    const r = rs.filter(x => x.retailerId === pstate.retailerId)[0] || null;
     const hasAddr = !!state.address;
+    const unitPrice = r ? r.price : p.price;
+    const maxQty = Math.min(MAX_QTY, r ? r.stock : MAX_QTY);
+    if (pstate.qty > maxQty) pstate.qty = Math.max(1, maxQty);
 
     host.innerHTML = [
       '<div class="lce-note">Static stand-in for the LiquidCommerce Elements product element</div>',
@@ -312,7 +376,9 @@
         '<div class="lce-body">',
           '<div class="lce-brandline">Kendall-Jackson · ', p.appellation, ' · ', p.vintage, '</div>',
           '<h1>', p.name, '</h1>',
-          '<div class="lce-price">', money(p.price), '<span class="unit">750 ML</span></div>',
+          '<div class="lce-price">', money(unitPrice), '<span class="unit">750 ML',
+            (available && rs.length > 1 ? ' · from ' + money(Math.min.apply(null, (VARIANTS[upc]||[]).map(v=>v.price))) : ''),
+          '</span></div>',
           '<p class="lce-desc">', p.desc, '</p>',
 
           '<div class="lce-field"><span class="lce-label">Size</span>',
@@ -323,35 +389,45 @@
 
           '<div class="lce-field"><span class="lce-label">How would you like it?</span>',
             '<div class="lce-tabs" role="tablist">',
-              '<button role="tab" data-ft="onDemand" aria-selected="', pstate.fulfillmentType === 'onDemand', '">',
-                'Same-day<span class="sub">About 1 hour</span></button>',
-              '<button role="tab" data-ft="shipping" aria-selected="', pstate.fulfillmentType === 'shipping', '">',
-                'Ship it<span class="sub">2–5 business days</span></button>',
+              '<button role="tab" data-ft="onDemand" aria-selected="', pstate.fulfillmentType === 'onDemand', '"',
+                variantsFor(upc,'onDemand').length ? '' : ' disabled', '>',
+                'Same-day<span class="sub">', variantsFor(upc,'onDemand').length ? 'About 1 hour' : 'Not available', '</span></button>',
+              '<button role="tab" data-ft="shipping" aria-selected="', pstate.fulfillmentType === 'shipping', '"',
+                variantsFor(upc,'shipping').length ? '' : ' disabled', '>',
+                'Ship it<span class="sub">', variantsFor(upc,'shipping').length ? '2–3 business days' : 'Not available', '</span></button>',
             '</div></div>',
 
           addressBlock(hasAddr),
 
-          '<div class="lce-field"><span class="lce-label">',
-            pstate.fulfillmentType === 'onDemand' ? 'Delivering from' : 'Shipping from',
-          '</span><div class="lce-retailers" role="radiogroup">',
+          rs.length ? '<div class="lce-field"><span class="lce-label">' +
+            (pstate.fulfillmentType === 'onDemand' ? 'Delivering from' : 'Shipping from') +
+          '</span><div class="lce-retailers" role="radiogroup">' : '',
             rs.map(function (rr) {
+              const low = rr.stock <= 12;
               return [
-                '<button class="lce-retailer" role="radio" data-rid="', rr.id,
-                  '" aria-checked="', rr.id === pstate.retailerId, '"',
+                '<button class="lce-retailer" role="radio" data-rid="', rr.retailerId,
+                  '" aria-checked="', rr.retailerId === pstate.retailerId, '"',
                   rr.status === 'closed' ? ' disabled' : '', '>',
                   '<span style="flex:1;min-width:0">',
                     '<span class="nm">', rr.name,
-                      '<span class="status ', rr.status, '">',
-                        rr.status === 'open' ? 'Open' : rr.status === 'soon' ? 'Closing soon' : 'Closed',
-                      '</span>',
+                      (rr.type === 'onDemand'
+                        ? '<span class="status ' + rr.status + '">' +
+                          (rr.status === 'open' ? 'Open' : rr.status === 'soon' ? 'Closing soon' : 'Closed') +
+                          '</span>' : ''),
                     '</span><br>',
-                    '<span class="meta">', rr.meta, ' · ', rr.expectation, '</span>',
+                    '<span class="meta">', rr.city, ' · ', rr.expectation,
+                      (low ? ' · only ' + rr.stock + ' left' : ''),
+                    '</span>',
                   '</span>',
-                  '<span class="fee">', rr.fee === 0 ? 'Free' : money(rr.fee), '</span>',
+                  '<span class="fee">', money(rr.price), '<br>',
+                    '<span style="font-size:.72rem;color:var(--gray-2)">',
+                      rr.fee === 0 ? 'free delivery' : money(rr.fee) + ' delivery',
+                    '</span>',
+                  '</span>',
                 '</button>'
               ].join('');
             }).join(''),
-          '</div></div>',
+          rs.length ? '</div></div>' : '',
 
           p.engravable ? [
             '<details class="lce-engrave"', pstate.engraving.length ? ' open' : '', '>',
@@ -371,13 +447,19 @@
               '<span id="qval">', pstate.qty, '</span>',
               '<button id="qplus" aria-label="Increase quantity">+</button>',
             '</div>',
-            '<button class="btn" id="addbtn">',
-              hasAddr ? 'Add to cart · ' + money(p.price * pstate.qty) : 'Add to cart',
+            '<button class="btn" id="addbtn"', available ? '' : ' disabled', '>',
+              !available ? 'Not available at this address'
+                         : (hasAddr ? 'Add to cart · ' + money(unitPrice * pstate.qty) : 'Add to cart'),
             '</button>',
           '</div>',
-          r && r.min > 0
-            ? '<div class="lce-alert" style="color:var(--gray)">' + r.name + ' has a ' + money(r.min) + ' order minimum.</div>'
-            : '',
+          !available
+            ? '<div class="lce-alert">This wine is in the Kendall-Jackson catalog but has no ' +
+              'retailer connected yet, so it cannot be delivered or shipped. ' +
+              'Try the Vintner\'s Reserve Chardonnay.</div>'
+            : (r && r.min > 0
+                ? '<div class="lce-alert" style="color:var(--gray)">' + r.name + ' has a ' + money(r.min) +
+                  ' order minimum' + (r.freeOver ? ', and waives the delivery fee over ' + money(r.freeOver) : '') + '.</div>'
+                : ''),
         '</div>',
       '</div>'
     ].join('');
@@ -408,16 +490,19 @@
     const p = CATALOG[pstate.upc];
 
     $$('.lce-tabs button', host).forEach(b => b.addEventListener('click', function () {
+      if (b.disabled) return;
       const prev = pstate.fulfillmentType;
       pstate.fulfillmentType = b.getAttribute('data-ft');
-      pstate.retailerId = RETAILERS[pstate.fulfillmentType].filter(r => r.status !== 'closed')[0].id;
+      const opts = variantsFor(pstate.upc, pstate.fulfillmentType);
+      const openOpts = opts.filter(x => x.status !== 'closed');
+      pstate.retailerId = ((openOpts[0] || opts[0]) || {}).retailerId || null;
       publish('product_fulfillment_type_changed', {
         identifier: pstate.upc, selectedFulfillmentType: pstate.fulfillmentType,
         selectedFulfillmentId: pstate.retailerId, previousFulfillmentType: prev,
         previousFulfillmentId: null, fulfillmentHasAvailability: true
       }, 'product');
       announce((pstate.fulfillmentType === 'onDemand' ? 'Same-day' : 'Shipping') + ' selected. ' +
-        RETAILERS[pstate.fulfillmentType].length + ' options available.');
+        variantsFor(pstate.upc, pstate.fulfillmentType).length + ' options available.');
       renderProduct();
     }));
 
@@ -430,8 +515,10 @@
         selectedFulfillmentType: pstate.fulfillmentType,
         previousFulfillmentId: prev, previousFulfillmentType: pstate.fulfillmentType
       }, 'product');
-      const r = retailerById(pstate.retailerId);
-      announce('Delivery option updated. ' + r.name + ', ' + (r.fee ? money(r.fee) : 'free') + '.');
+      const r = variantsFor(pstate.upc, pstate.fulfillmentType)
+                  .filter(x => x.retailerId === pstate.retailerId)[0];
+      if (r) announce('Delivery option updated. ' + r.name + ', ' + money(r.price) +
+                      ', ' + (r.fee ? money(r.fee) + ' delivery' : 'free delivery') + '.');
       renderProduct();
     }));
 
@@ -459,6 +546,14 @@
       }
     });
     if (qp) qp.addEventListener('click', function () {
+      const v = variantOf(pstate.upc, pstate.retailerId);
+      const cap = Math.min(MAX_QTY, v ? v.stock : MAX_QTY);
+      if (pstate.qty >= cap) {
+        announce(v && v.stock < MAX_QTY
+          ? 'Only ' + v.stock + ' in stock at this retailer'
+          : 'Maximum ' + MAX_QTY + ' per order');
+        return;
+      }
       pstate.qty++;
       publish('product_quantity_increase', { identifier: pstate.upc, quantity: pstate.qty, previousQuantity: pstate.qty - 1 }, 'product');
       announce(p.name + ', quantity ' + pstate.qty);
@@ -508,7 +603,8 @@
               '<span class="exp">', g.retailer.expectation, '</span></div>',
             g.items.map(function (i) {
               const p = CATALOG[i.upc];
-              const lineTotal = p.price * i.qty + (i.engravingLines.length ? ENGRAVING.fee * i.qty : 0);
+              const lineTotal = priceFor(i.upc, i.retailerId) * i.qty +
+                                (i.engravingLines.length ? ENGRAVING.fee * i.qty : 0);
               return [
                 '<div class="line">',
                   '<div class="thumb"><img src="', p.image, '" alt=""></div>',
@@ -550,6 +646,7 @@
           '<div class="r"><span>Subtotal</span><span class="v">', money(t.subtotal), '</span></div>',
           t.discount ? '<div class="r disc"><span>Discount</span><span class="v">−' + money(t.discount) + '</span></div>' : '',
           '<div class="r"><span>Delivery</span><span class="v">', t.delivery ? money(t.delivery) : 'Free', '</span></div>',
+          t.platform ? '<div class="r"><span>Service fee</span><span class="v">' + money(t.platform) + '</span></div>' : '',
           '<div class="r"><span>Estimated tax</span><span class="v">', money(t.tax), '</span></div>',
           '<div class="r big"><span>Total</span><span class="v">', money(t.total), '</span></div>',
         '</div>',
@@ -600,7 +697,8 @@
       groups.length ? groups.map(function (g) {
         return g.items.map(function (i) {
           const p = CATALOG[i.upc];
-          const lt = p.price * i.qty + (i.engravingLines.length ? ENGRAVING.fee * i.qty : 0);
+          const lt = priceFor(i.upc, i.retailerId) * i.qty +
+                     (i.engravingLines.length ? ENGRAVING.fee * i.qty : 0);
           return [
             '<div class="line" style="padding-left:0;padding-right:0">',
               '<div class="thumb"><img src="', p.image, '" alt=""></div>',
@@ -616,6 +714,7 @@
         '<div class="r"><span>Subtotal</span><span class="v">', money(t.subtotal), '</span></div>',
         t.discount ? '<div class="r disc"><span>Discount (' + state.promo + ')</span><span class="v">−' + money(t.discount) + '</span></div>' : '',
         '<div class="r"><span>Delivery</span><span class="v">', t.delivery ? money(t.delivery) : 'Free', '</span></div>',
+        t.platform ? '<div class="r"><span>Service fee</span><span class="v">' + money(t.platform) + '</span></div>' : '',
         '<div class="r"><span>Tax</span><span class="v">', money(t.tax), '</span></div>',
         '<div class="r big"><span>Total</span><span class="v">', money(t.total), '</span></div>',
       '</div>'
@@ -670,6 +769,17 @@
     });
   }
 
+  // Pick the best real variant for a one-click add: cheapest open same-day,
+  // else cheapest shipping. Returns false if nothing is connected.
+  function quickAdd(upc) {
+    const od = variantsFor(upc, 'onDemand').filter(v => v.status !== 'closed');
+    const sh = variantsFor(upc, 'shipping');
+    const pick = od[0] || sh[0];
+    if (!pick) { announce('Not available at this address'); return false; }
+    return addProduct({ upc: upc, fulfillmentType: pick.type,
+                        retailerId: pick.retailerId, quantity: 1, engravingLines: [] }, true);
+  }
+
   // ---------------------------------------------------------------- boot
   function renderAll() { renderHeader(); renderProduct(); renderDrawer(); renderCheckout(); }
 
@@ -690,8 +800,7 @@
     $$('[data-add-upc]').forEach(b => b.addEventListener('click', function (e) {
       e.preventDefault();
       const upc = b.getAttribute('data-add-upc');
-      addProduct({ upc: upc, fulfillmentType: 'onDemand',
-                   retailerId: RETAILERS.onDemand[0].id, quantity: 1, engravingLines: [] }, true);
+      quickAdd(upc);
     }));
 
     wireCheckout();
@@ -711,7 +820,12 @@
       address: { getDetails: () => state.address, clear: clearAddress },
       product: { getDetails: upc => CATALOG[upc] }
     },
-    catalog: CATALOG
+    catalog: CATALOG,
+    retailers: RETAILERS,
+    variants: VARIANTS,
+    quickAdd: quickAdd,
+    availability: function (upc) { return { available: hasAvailability(upc),
+      onDemand: variantsFor(upc, 'onDemand'), shipping: variantsFor(upc, 'shipping') }; }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

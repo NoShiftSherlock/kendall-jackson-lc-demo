@@ -14,8 +14,13 @@
  *     Elements  .../api/auth/authenticate  staging             -> 403 apiKey.error.invalid
  *
  * Two separately provisioned backends behind one key. Elements has not been
- * enabled for this partner account. Verified 2026-09-05, and not a domain
- * allowlist issue (localhost, the Pages origin and kj.com all 403 identically).
+ * enabled for this partner account. Verified 2026-09-05, re-checked 2026-09-11,
+ * still 403. Not a domain allowlist issue (localhost, the Pages origin and
+ * kj.com all 403 identically).
+ *
+ * NOTE: retailers WERE connected on 2026-09-11, and the demo now runs on real
+ * retailer/price/stock data from the REST catalog API. That is a separate
+ * switch from Elements provisioning, and only the first one has been flipped.
  *
  * TO TURN IT ON
  *   1. Re-run the preflight:

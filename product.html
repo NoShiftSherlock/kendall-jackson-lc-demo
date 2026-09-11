@@ -102,11 +102,15 @@
   var cur = document.getElementById('lce-product').getAttribute('data-upc');
   grid.innerHTML = Object.keys(c).filter(function (u) { return u !== cur; }).slice(0, 4).map(function (upc) {
     var p = c[upc];
+    var av = window.KJDemo.availability(upc);
+    var all = av.onDemand.concat(av.shipping);
+    var from = all.length ? Math.min.apply(null, all.map(function (v) { return v.price; })) : null;
     return '<a class="card" href="product.html?upc=' + upc + '">' +
       '<div class="shot"><img src="' + p.image + '" alt="' + p.name + '"></div>' +
       '<span class="varietal">' + p.varietal + '</span>' +
       '<h3>' + p.name + '</h3>' +
-      '<span class="price">$' + (p.price / 100).toFixed(2) + '</span></a>';
+      (from ? '<span class="price">from $' + (from / 100).toFixed(2) + '</span>'
+            : '<span class="price" style="color:var(--gray-2)">Not yet available</span>') + '</a>';
   }).join('');
 })();
 </script>

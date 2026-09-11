@@ -53,7 +53,7 @@
 <section class="band" id="collection">
   <div class="section-head">
     <h2>The Vintner's Reserve Collection</h2>
-    <p>Six wines, one philosophy: grapes from cool coastal ridges, picked by hand.</p>
+    <p>One philosophy: grapes from cool coastal ridges, picked by hand.</p>
   </div>
   <div class="grid" id="collection-grid"></div>
 </section>
@@ -130,29 +130,38 @@
 <script src="elements-config.js"></script>
 <script src="app.js"></script>
 <script>
-// Build the collection grid from the same catalog the product element uses.
+// Collection grid, built from the same catalog + real availability the product
+// element uses. Cards show what is actually purchasable, not a uniform price list.
 (function () {
   var grid = document.getElementById('collection-grid');
   if (!grid || !window.KJDemo) return;
   var c = window.KJDemo.catalog;
+
   grid.innerHTML = Object.keys(c).map(function (upc) {
     var p = c[upc];
+    var av = window.KJDemo.availability(upc);
+    var all = av.onDemand.concat(av.shipping);
+    var from = all.length ? Math.min.apply(null, all.map(function (v) { return v.price; })) : null;
+    var sameDay = av.onDemand.filter(function (v) { return v.status !== 'closed'; }).length;
+
     return '<a class="card" href="product.html?upc=' + upc + '">' +
       '<div class="shot"><img src="' + p.image + '" alt="' + p.name + '"></div>' +
       '<span class="varietal">' + p.varietal + '</span>' +
       '<h3>' + p.name + '</h3>' +
-      '<span class="price">$' + (p.price / 100).toFixed(2) + '</span>' +
-      '<span class="btn ghost" style="margin-top:.5rem" data-add-upc="' + upc + '">Add to cart</span>' +
+      (from
+        ? '<span class="price">from $' + (from / 100).toFixed(2) + '</span>' +
+          (sameDay ? '<span class="varietal" style="color:var(--green)">Same-day in LA</span>' : '')
+        : '<span class="price" style="color:var(--gray-2)">Not yet available</span>') +
+      (from
+        ? '<span class="btn ghost" style="margin-top:.5rem" data-add-upc="' + upc + '">Add to cart</span>'
+        : '<span class="btn ghost" style="margin-top:.5rem;opacity:.4;pointer-events:none">Unavailable</span>') +
       '</a>';
   }).join('');
-  // rewire the add buttons that were just injected
+
   Array.prototype.forEach.call(grid.querySelectorAll('[data-add-upc]'), function (b) {
     b.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
-      window.KJDemo.actions.cart.addProduct({
-        upc: b.getAttribute('data-add-upc'), fulfillmentType: 'onDemand',
-        retailerId: 'r-totalw', quantity: 1, engravingLines: []
-      }, true);
+      window.KJDemo.quickAdd(b.getAttribute('data-add-upc'));
     });
   });
 })();
