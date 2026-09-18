@@ -407,3 +407,43 @@ footer.site { background: var(--black); color: #cfc7ba; margin-top: 4rem; }
   .lce-buy { flex-wrap: wrap; }
   .lce-buy .btn { flex: 1 1 100%; }
 }
+
+/* ------------------------------------------------ price-suppressed variant
+   Used by product-noprice.html. Mirrors the SDK's product element layout but
+   omits every price. The SDK has no option to hide prices and its shadow root
+   is closed, so this UI is ours; the cart and checkout stay the SDK's. */
+.np-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr); }
+.np-gallery { background: var(--offwhite); padding: 2.5rem; display: flex; align-items: center; justify-content: center; }
+.np-gallery img { max-width: 100%; max-height: 420px; object-fit: contain; }
+.np-detail { padding: 2rem 2.25rem; }
+.np-title { font-size: 1.5rem; line-height: 1.25; margin: 0 0 1.25rem; text-transform: uppercase; letter-spacing: .01em; }
+.np-label { font-family: var(--mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--gray); margin: 1.1rem 0 .45rem; }
+.np-sizes { display: flex; gap: .5rem; }
+.np-size { background: var(--ink); color: #fff; border: none; border-radius: var(--radius-pill); padding: .5rem 1.1rem; font-family: var(--mono); font-size: .78rem; }
+.np-addr { background: none; border: none; padding: 0; color: var(--gold); text-decoration: underline; font-size: .92rem; cursor: pointer; text-align: left; }
+.np-tabs { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--line); margin: 1.4rem 0 1rem; }
+.np-tab { background: none; border: none; padding: .55rem 0; font-size: .95rem; color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.np-tab.on { color: var(--ink); border-bottom-color: var(--ink); font-weight: 500; }
+.np-tiles { display: flex; gap: .75rem; overflow-x: auto; padding-bottom: .4rem; }
+.np-tile { flex: 0 0 15rem; text-align: left; display: flex; flex-direction: column; gap: .3rem;
+  background: #fff; border: 1px solid var(--gold); border-radius: var(--radius); padding: 1rem; cursor: pointer; }
+.np-tile.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.np-tile.closed { opacity: .45; cursor: not-allowed; border-color: var(--line); }
+.np-rname { font-weight: 600; font-size: .95rem; }
+.np-raddr { font-size: .8rem; opacity: .75; }
+.np-fee { margin-top: .5rem; font-size: .88rem; }
+.np-eta { font-size: .82rem; opacity: .8; }
+.np-buy { display: flex; gap: .75rem; align-items: stretch; margin-top: 1.4rem; }
+.np-qty { display: flex; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); }
+.np-qty button { background: none; border: none; width: 2.2rem; font-size: 1rem; cursor: pointer; }
+.np-qty span { min-width: 2rem; text-align: center; font-family: var(--mono); font-size: .9rem; }
+.np-add { flex: 1; background: var(--ink); color: #fff; border: none; border-radius: var(--radius-pill); padding: .85rem 1.5rem; font-size: .95rem; cursor: pointer; }
+.np-add[disabled] { opacity: .45; cursor: not-allowed; }
+.np-note { font-family: var(--mono); font-size: .7rem; color: var(--gray); margin: .6rem 0 0; }
+.np-about { margin-top: 1.6rem; font-size: .9rem; line-height: 1.6; }
+.np-about p { margin: .4rem 0 0; color: var(--gray-2, #555); }
+.np-empty { padding: 1.25rem; color: var(--gray); font-size: .9rem; }
+@media (max-width: 820px) {
+  .np-grid { grid-template-columns: 1fr; }
+  .np-detail { padding: 1.5rem 1.25rem; }
+}

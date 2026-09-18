@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vintner's Reserve — Kendall-Jackson (no pricing)</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Roboto+Condensed:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="announce">Complimentary shipping on 6 bottles or more · Same-day delivery in Los Angeles</div>
+
+<header>
+  <div class="hdr">
+    <a href="index.html"><img class="logo" src="assets/logo.png" alt="Kendall-Jackson"></a>
+    <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
+    <nav class="main">
+      <a href="index.html">Wines</a>
+      <a href="product-noprice.html" aria-current="page">Vintner's Reserve</a>
+      <a href="index.html#story">Our Story</a>
+      <a href="index.html#visit">Visit</a>
+    </nav>
+    <div class="hdr-actions">
+      <button class="cart-pill" data-lce-cart-toggle-button>
+        <span class="lbl">Cart</span>
+        <span class="count" data-lce-cart-items-count>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="band" style="padding-top:2rem">
+  <div style="font-size:.82rem;color:var(--gray);margin-bottom:1.25rem">
+    <a href="index.html" style="color:inherit">Wines</a> &rsaquo; Vintner's Reserve
+  </div>
+
+  <div class="lce-host">
+    <div id="np-product" data-upc="00081584013105"></div>
+  </div>
+
+  <section style="margin-top:3rem">
+    <div class="section-head" style="text-align:left">
+      <h2 style="font-size:1.6rem">More from the collection</h2>
+    </div>
+    <div class="grid" id="more-grid"></div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="ft">
+    <div>
+      <img src="assets/logo-large.png" alt="Kendall-Jackson" style="height:52px;width:auto;filter:invert(1) brightness(2)">
+      <p style="font-size:.86rem;margin-top:1rem;max-width:22rem">Family owned since 1982.</p>
+    </div>
+    <div><h4>Shop</h4><ul>
+      <li><a href="product.html">Vintner's Reserve</a></li>
+      <li><a href="index.html#collection">Grand Reserve</a></li></ul></div>
+    <div><h4>Visit</h4><ul>
+      <li><a href="index.html#visit">Wine Center</a></li>
+      <li><a href="index.html#visit">Tastings</a></li></ul></div>
+    <div><h4>Support</h4><ul>
+      <li><a href="#">Shipping</a></li>
+      <li><a href="#">Contact</a></li></ul></div>
+  </div>
+  <div class="legal-row">
+    Private sales demo. Not affiliated with Kendall-Jackson or Jackson Family Wines.
+    Trademarks belong to their owners. Please enjoy responsibly.
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Shopping cart">
+  <header>
+    <h2>Your Cart</h2>
+    <button class="x" id="drawer-close" aria-label="Close cart">&times;</button>
+  </header>
+  <div class="items" id="drawer-items"></div>
+  <div class="foot" id="drawer-foot"></div>
+</aside>
+
+<div class="ribbon">Demo &middot; Vesper Commerce</div>
+
+<script>
+// ?upc= selects which product renders. Must run before noprice.js reads it.
+(function () {
+  var u = new URLSearchParams(location.search).get('upc');
+  if (u) { var el = document.getElementById('np-product'); if (el) el.setAttribute('data-upc', u); }
+})();
+</script>
+<script src="elements-config.js"></script>
+<script src="noprice.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var grid = document.getElementById('more-grid');
+  if (!grid || !window.KJDemo) return;
+  var c = window.KJDemo.catalog;
+  var cur = document.getElementById('np-product').getAttribute('data-upc');
+  grid.innerHTML = Object.keys(c).filter(function (u) { return u !== cur; }).slice(0, 4).map(function (upc) {
+    var p = c[upc];
+    var av = window.KJDemo.availability(upc);
+    // No "from $X" here. This variant shows price only in cart/checkout, so the
+    // listing states availability instead.
+    var available = av.onDemand.length + av.shipping.length > 0;
+    return '<a class="card" href="product-noprice.html?upc=' + upc + '">' +
+      '<div class="shot"><img src="' + p.image + '" alt="' + p.name + '"></div>' +
+      '<span class="varietal">' + p.varietal + '</span>' +
+      '<h3>' + p.name + '</h3>' +
+      (available ? '<span class="price">Available near you</span>'
+                 : '<span class="price" style="color:var(--gray-2)">Not yet available</span>') + '</a>';
+  }).join('');
+})();
+</script>
+</body>
+</html>
