@@ -115,8 +115,17 @@
     if (add) add.onclick = async function () {
       add.disabled = true; add.textContent = 'Adding…';
       try {
+        // The public cart API takes { identifier, fulfillmentType, quantity,
+        // engravingLines } ONLY. There is no fulfillmentId / retailerId field:
+        // passing one is silently ignored and fulfillmentType defaults to
+        // "shipping", which is why an unfixed build adds a shipping retailer
+        // even when a same-day tile is selected. The SDK chooses the retailer
+        // within the type; the tiles below are therefore a real availability
+        // list, but the specific tile is not yet honoured by the cart.
         await el.actions.cart.addProduct([{
-          identifier: UPC, fulfillmentId: selectedFulfillmentId, quantity: qty
+          identifier: UPC,
+          fulfillmentType: mode,          // 'onDemand' | 'shipping'
+          quantity: qty
         }]);
         add.textContent = 'Added';
         el.actions.cart.openCart();
