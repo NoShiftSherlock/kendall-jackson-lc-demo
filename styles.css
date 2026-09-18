@@ -89,7 +89,12 @@ nav.main a:hover, nav.main a[aria-current] { border-bottom-color: var(--gold); }
   min-width: 1.35rem; height: 1.35rem; display: inline-grid; place-items: center;
   font-family: var(--mono); font-size: .7rem; padding: 0 .3rem;
 }
+/* The Elements SDK owns this badge: it sets the number and toggles its own
+   .no-items class at zero. It does NOT touch the `hidden` attribute, so a
+   static hidden here would pin the badge invisible even with items in the
+   cart. Hide-at-zero is therefore driven by the SDK's class. */
 .cart-pill .count[hidden] { display: none; }
+.cart-pill .count.no-items { display: none; }
 .burger { display: none; background: none; border: none; font-size: 1.5rem; line-height: 1; }
 
 /* ---------------------------------------------------------------- hero */
@@ -153,9 +158,21 @@ nav.main a:hover, nav.main a[aria-current] { border-bottom-color: var(--gold); }
 /* ---------------------------------------------------------------- ELEMENTS STAND-IN
    Everything below approximates the real Elements product component. */
 
+/* The Elements SDK renders inside a CLOSED shadow root (attachShadow mode
+   "closed", no ::part, no exportparts, no CSS custom properties), so its
+   internal layout cannot be styled from this stylesheet. The one lever we do
+   have is the width we hand it.
+
+   This max-width is load-bearing, not cosmetic. Given the full 1240px of the
+   content band, the SDK's address-entry state collapses its details column to
+   a ~20px sliver pinned to the right edge while the gallery takes the rest.
+   Constrained to 960 it lays out correctly: full-width address input with
+   Cancel/Save side by side. Verified 2026-09-18. If you widen this, re-check
+   the address state before shipping. */
 .lce-host {
   background: var(--white); border: 1px solid var(--line);
   border-radius: var(--radius); overflow: hidden;
+  max-width: 960px; margin-inline: auto;
 }
 .lce-note {
   background: var(--gold-soft); border-bottom: 1px solid var(--line);
