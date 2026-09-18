@@ -84,15 +84,16 @@
 
 <div class="ribbon">Demo &middot; Vesper Commerce</div>
 
-<script src="elements-config.js"></script>
 <script>
 // ?upc= selects which product the element renders, matching how a real PDP
-// would resolve its identifier. Runs before app.js reads the attribute.
+// would resolve its identifier. MUST run before elements-config.js, whose
+// loader reads data-upc synchronously to build the SDK script tag.
 (function () {
   var u = new URLSearchParams(location.search).get('upc');
   if (u) { var el = document.getElementById('lce-product'); if (el) el.setAttribute('data-upc', u); }
 })();
 </script>
+<script src="elements-config.js"></script>
 <script src="app.js"></script>
 <script>
 (function () {

@@ -4,23 +4,23 @@
  * This is the only file you edit to turn on real LiquidCommerce Elements.
  * Everything else in this demo already speaks the SDK's event vocabulary.
  *
- * WHY IT IS OFF
- * Kendall-Jackson's partner API key (Partner App > Integration Credentials >
- * Production) authenticates fine against the LiquidCommerce REST API but is
- * rejected by the Elements service:
+ * STATUS: LIVE as of 2026-09-18.
  *
- *     REST      api.liquidcommerce.cloud/authentication        -> 200
- *     Elements  .../api/auth/authenticate  production          -> 403 apiKey.error.invalid
- *     Elements  .../api/auth/authenticate  staging             -> 403 apiKey.error.invalid
+ * The 403 that blocked this for two weeks was a wrong-key problem, not an
+ * outage. The Elements service takes a DIFFERENT credential from the REST API:
  *
- * Two separately provisioned backends behind one key. Elements has not been
- * enabled for this partner account. Verified 2026-09-05, re-checked 2026-09-11,
- * still 403. Not a domain allowlist issue (localhost, the Pages origin and
- * kj.com all 403 identically).
+ *     REST      Partner App > Integration Credentials   secret key
+ *     Elements  Partner App > Quick Start > Main Script  data-token, starts pk_
  *
- * NOTE: retailers WERE connected on 2026-09-11, and the demo now runs on real
- * retailer/price/stock data from the REST catalog API. That is a separate
- * switch from Elements provisioning, and only the first one has been flipped.
+ * The pk_ token is publishable by design and ships in the page source of every
+ * live Elements site, so it lives in this file. The REST key never should.
+ *
+ *     Elements  .../api/auth/authenticate  production   -> 200  (verified 2026-09-18)
+ *     Elements  .../api/auth/authenticate  staging      -> 403  (production-only token)
+ *
+ * Retailers are connected on the Chardonnay: 7 retailers, 2 same-day in LA.
+ * Google Places key was added to the Partner App 2026-09-14, so address
+ * autocomplete works; KJ must procure their own key before going live.
  *
  * TO TURN IT ON
  *   1. Re-run the preflight:
@@ -38,14 +38,17 @@
  * ========================================================================== */
 
 window.ELEMENTS = {
-  enabled: false,                 // <- flip to true once preflight passes
-  token: 'PASTE_ELEMENTS_API_KEY',
-  partnerCode: '',                // e.g. 'kj' — first path segment from the Partner App script tag
+  enabled: true,
+  token: 'pk_i7U6HzS1O4SZQxriKO4zo0Oh8QV78jES8cO4oRmM7VdX60H4EOr1uh6wMQeM1mKluhOGJnmCVcWPO01Snd8JwgfY',
+  partnerCode: 'kenda',           // first path segment of the Partner App script src
   env: 'production',              // 'production' | 'staging'
   mockMode: false,                // true renders the Builder mock UPCs 99000000000001/2/3
   defaultUpc: '00081584013105',   // Vintner's Reserve Chardonnay 750ml
 
   // Real Kendall-Jackson identifiers, pulled from the LiquidCommerce catalog API.
+  // Only the Chardonnay has variants/retailers attached today. The other three
+  // are in the catalog but return no variants, so Elements renders them as
+  // unavailable. Requested from onboarding 2026-09-07, still open.
   upcs: {
     chardonnay:        '00081584013105',
     sauvignonBlanc:    '00081584130406',
@@ -146,6 +149,17 @@ window.ELEMENTS = {
     s.textContent = JSON.stringify(obj);
     document.head.appendChild(s);
   }
+  // Retire the stand-in DOM. app.js's boot() already returns early when enabled,
+  // so these nodes would otherwise sit on the page empty and unwired.
+  document.addEventListener('DOMContentLoaded', function () {
+    ['#drawer', '#scrim', '#checkout-view'].forEach(function (sel) {
+      var n = document.querySelector(sel);
+      if (n) n.style.display = 'none';
+    });
+    var note = document.querySelector('.lce-note');
+    if (note) note.remove();
+  });
+
   jsonTag('data-liquid-commerce-elements-development', { mockMode: !!E.mockMode });
   jsonTag('data-liquid-commerce-elements-custom-theme', E.customTheme);
 
@@ -156,21 +170,26 @@ window.ELEMENTS = {
   s.setAttribute('data-liquid-commerce-elements', '');
   s.setAttribute('data-token', E.token);
   s.setAttribute('data-env', E.env);
-  s.setAttribute('data-cart-badge-button', 'header-cart');
   s.setAttribute('data-checkout-url', repoBase + 'checkout.html?lce_checkout={token}');
   s.setAttribute('data-checkout-param', 'lce_checkout');
 
+  // Verified against the shipped bundle 2026-09-18. The SDK's attribute map is:
+  //   ELEMENT.PRODUCT       data-lce-product   (on the container div, value = UPC)
+  //   CART_TOGGLE_BUTTON    data-lce-cart-toggle-button
+  //   CART_ITEMS_COUNT      data-lce-cart-items-count
+  //   CHECKOUT              data-lce-checkout
+  // There is NO data-container-N / data-product-N in this bundle; those are from
+  // older docs and are silently ignored, which renders no product at all.
+  // We do not set data-cart-badge-button: this site has its own branded cart
+  // pill carrying data-lce-cart-toggle-button, which the SDK binds natively.
   var host = document.getElementById('lce-product');
-  if (host) {
-    s.setAttribute('data-container-1', 'lce-product');
-    s.setAttribute('data-product-1', host.getAttribute('data-upc') || E.defaultUpc);
-  }
+  if (host) host.setAttribute('data-lce-product', host.getAttribute('data-upc') || E.defaultUpc);
   s.src = base + path;
   document.head.appendChild(s);
 
   // client_ready is dispatched twice by the SDK; {once:true} is not optional.
   window.addEventListener('lce:actions.client_ready', function () {
-    console.info('[KJ demo] Elements SDK ready — static stand-in should be removed.');
+    console.info('[KJ demo] Elements SDK ready.');
   }, { once: true });
 
   setTimeout(function () {

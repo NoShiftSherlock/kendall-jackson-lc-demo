@@ -1,11 +1,4 @@
-/* Kendall-Jackson x LiquidCommerce Elements demo.
- *
- * As of 2026-09-18 the real Elements SDK is live, so this file no longer renders
- * commerce. It is retained only for its CATALOG / RETAILERS / VARIANTS snapshot
- * (pulled from the REST catalog API), which the collection grid reads to show
- * which SKUs are actually purchasable. See boot().
- *
- * Original header follows - static commerce stand-in.
+/* Kendall-Jackson x LiquidCommerce Elements demo — static commerce stand-in.
  *
  * WHY THIS EXISTS
  * The Kendall-Jackson partner API key authenticates against the LiquidCommerce
@@ -791,17 +784,6 @@
   function renderAll() { renderHeader(); renderProduct(); renderDrawer(); renderCheckout(); }
 
   function boot() {
-    // Site chrome (nav burger) is ours either way.
-    const burger0 = $('#burger');
-    if (burger0) burger0.addEventListener('click', () => $('nav.main').classList.toggle('open'));
-
-    // When the real Elements SDK is on, it owns the product element, cart drawer
-    // and checkout. This file then serves ONLY as the catalog/availability
-    // snapshot that the collection grid reads. Critically, do not publish a
-    // second client_ready - the SDK publishes the real one and listeners use
-    // {once:true}, so a stand-in event would win the race and mask the SDK.
-    if (window.ELEMENTS && window.ELEMENTS.enabled) return;
-
     // drawer wiring
     $$('[data-lce-cart-toggle-button]').forEach(b => b.addEventListener('click', function () {
       const d = $('#drawer');
@@ -810,6 +792,9 @@
     const x = $('#drawer-close'); if (x) x.addEventListener('click', closeDrawer);
     const s = $('#scrim'); if (s) s.addEventListener('click', closeDrawer);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+    const burger = $('#burger');
+    if (burger) burger.addEventListener('click', () => $('nav.main').classList.toggle('open'));
 
     // homepage add-to-cart shortcuts
     $$('[data-add-upc]').forEach(b => b.addEventListener('click', function (e) {
