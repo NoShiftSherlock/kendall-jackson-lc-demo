@@ -134,18 +134,25 @@
       sizeId = Object.keys(product.sizes || {})[0];
       render();
     } catch (e) {
-      console.error('[KJ no-price] getDetails failed', e);
-      host().innerHTML = '<div class="np-empty">Enter a delivery address to see availability.</div>';
+      // Expected before the SDK finishes loading the product; product_loaded
+      // will call us again. Only show the empty state, never a hard error.
+      if (!product) host().innerHTML =
+        '<div class="np-empty">Enter a delivery address to see availability.</div>';
     }
   }
 
+  var booted = false;
   function boot() {
+    if (booted) return;
     el = window.LiquidCommerce && window.LiquidCommerce.elements;
     if (!el) { setTimeout(boot, 500); return; }
-    load();
-    // Re-render whenever the shopper changes address, and keep the tiles honest.
+    booted = true;
+    // product_loaded is the real signal: getDetails() throws "has not been
+    // loaded yet" until the SDK has loaded the product into its own element.
+    window.addEventListener('lce:actions.product_loaded', load);
     window.addEventListener('lce:actions.address_updated', load);
     window.addEventListener('lce:actions.cart_reset', function () { qty = 1; });
+    load();
   }
   window.addEventListener('lce:actions.client_ready', boot, { once: true });
   setTimeout(boot, 4000); // client_ready may already have fired before this file ran

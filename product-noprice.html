@@ -38,6 +38,16 @@
     <a href="index.html" style="color:inherit">Wines</a> &rsaquo; Vintner's Reserve
   </div>
 
+  <!-- actions.product.getDetails() only answers for a product the SDK has
+       already LOADED, and loading is what injecting a product element does.
+       This off-screen element is therefore the data source: the SDK loads the
+       product into it, noprice.js reads it, and paints the price-free UI into
+       #np-product below. Positioned off-canvas rather than display:none so the
+       SDK still gets a real box to lay out in. -->
+  <div id="lce-product" data-upc="00081584013105"
+       aria-hidden="true"
+       style="position:absolute;left:-10000px;top:0;width:960px;height:1px;overflow:hidden"></div>
+
   <div class="lce-host">
     <div id="np-product" data-upc="00081584013105"></div>
   </div>
