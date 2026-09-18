@@ -9,7 +9,9 @@
 #   ./scripts/refresh-availability.sh [zip]      default 90028 (Hollywood)
 set -euo pipefail
 
-CREDS="$HOME/.accelpay-ai-tools/liquidcommerce_partner.json"
+# Point LC_CREDS at a JSON file holding your REST key, or export
+# LC_REST_KEY directly. Not the Elements pk_ token: this uses the REST API.
+CREDS="${LC_CREDS:-$HOME/.liquidcommerce_partner.json}"
 [ -f "$CREDS" ] || { echo "missing $CREDS" >&2; exit 2; }
 KEY=$(python3 -c "import json;print(json.load(open('$CREDS'))['elements']['api_key'])")
 ZIP="${1:-90028}"
